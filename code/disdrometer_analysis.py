@@ -27,6 +27,26 @@ from matplotlib.dates import DateFormatter
 import pytz
 import matplotlib.colors as mcolors
 
+def plot_DSD(filename):
+    dsd = pyd.read_parsivel(filename)
+
+    fig = plt.figure(figsize = [5,4])
+    plt.scatter(dsd.diameter['data'], dsd.fields['Nd']['data'])
+    plt.yscale('log')
+    plt.ylim(10E-2, 10E5)
+    plt.xlim(0, 5)
+    
+    plt.xlabel('Diameter (mm)')
+    plt.ylabel('Concentration (mm^-1 m^-3)')
+    
+    time = datetime.datetime.fromtimestamp(dsd.time['data'][0])
+    time = time + timedelta(hours=1)
+    
+    #time = str(datetime.datetime.fromtimestamp(dsd.time['data'][0]))
+    time = str(time)
+    plt.title(f'Measured DSD at {time}')
+    return fig
+
 def plot_time_series(Data_Path):
     
     files = os.listdir(Data_Path)
@@ -72,9 +92,8 @@ def plot_time_series(Data_Path):
 
 def main():
 
-    Data_Path = '/net/k2/storage/people/idariash/home/CSU/DFW/data/Charlie/20240108'
-    '/net/k2/storage/people/idariash/home/CSU/DFW/data/20240108'
-    plot_time_series(Data_Path)
+    filename = '/net/k2/storage/projects/DistroDFW/DFW/UMASS/SEHP/20240108/DIS_20240108_173401.txt'
+    plot_DSD(filename)
     
 if __name__ == "__main__":
     main()
