@@ -27,6 +27,48 @@ from matplotlib.dates import DateFormatter
 import pytz
 import matplotlib.colors as mcolors
 
+import pyart
+import netCDF4
+
+
+def plot_nexrad_ppi_ref(filename, sweep):
+    
+    radar = pyart.io.read(filename)
+    x = sweep
+    angles = radar.fixed_angle['data'];
+    display = pyart.graph.RadarDisplay(radar)
+    
+    gatefilter = pyart.filters.GateFilter(radar)
+    gatefilter.exclude_transition()
+    gatefilter.exclude_invalid('reflectivity')
+    #gatefilter.exclude_invalid('differential_phase')
+    gatefilter.exclude_outside('reflectivity', 0, 100)
+    #gatefilter.exclude_outside('normalized_coherent_power', 0.5, 1)
+    gatefilter.exclude_outside('cross_correlation_ratio', 0.9, 1)
+    
+    angle = str( round(angles[x],2))
+    fig = plt.figure(figsize = [10,8])
+    
+    time_start = netCDF4.num2date(radar.time['data'][0], radar.time['units'])
+    time_text = time_start.strftime('%Y-%m-%dT%H:%M:%S')
+           
+    #  Reflectivity               
+    display.plot_ppi('reflectivity', sweep = x , # axislabels = ['', 'North South distance from radar (km)'],
+                    title = 'Reflectivity', colorbar_label='Ref. (dBZ)',
+                    vmin = 0, vmax = 70, mask_outside = False,
+                    cmap = pyart.graph.cm.NWSRef, gatefilter = gatefilter) #pyart.graph.cm.NWSRef
+    #display.plot_range_rings([25, 50, 75])
+    display.plot_grid_lines(ax=None, col='k', ls=':')
+    display.set_limits(xlim=[-100,100], ylim=[-100,100])
+    
+    radar_name = radar.metadata['instrument_name']
+    plt.suptitle(radar_name + ' | Elevation: ' + angle + ' Deg.| ' + time_text
+                  + ' UTC', fontsize=16)
+    
+    return fig
+
+
+
 def plot_DSD(filename):
     dsd = pyd.read_parsivel(filename)
 
@@ -92,8 +134,9 @@ def plot_time_series(Data_Path):
 
 def main():
 
-    filename = '/net/k2/storage/projects/DistroDFW/DFW/UMASS/SEHP/20240108/DIS_20240108_173401.txt'
-    plot_DSD(filename)
+    filename = '/net/k2/storage/people/idariash/home/CSU/DFW/radar/KFWS20240108_173658_V06'
+    sweep = 0
+    plot_nexrad_ppi_ref(filename, sweep)
     
 if __name__ == "__main__":
     main()
